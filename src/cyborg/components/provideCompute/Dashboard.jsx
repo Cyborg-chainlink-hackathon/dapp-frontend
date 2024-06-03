@@ -30,11 +30,29 @@ function NoNodes({addNode}) {
 }
 
 function NodeList({nodes, tasks}) {
-    // const 
-    // useEffect(()=>{
-    //     const
-    // }, [nodes, tasks])
-    const { toggleDashboard, taskMetadata } = useCyborg()
+    const { toggleDashboard, setTaskMetadata } = useCyborg()
+    const { taskMetadata } = useCyborgState()
+    const [extendNodes, setExtendNodes] = useState(null)
+    useEffect(()=>{
+        function updateNodes() {
+            const latestTasks = tasks.reverse();
+            const update = nodes.map(node => {
+                const matchWorker = latestTasks.find(task => node.address === task.workerAddress)
+                if (matchWorker) return {...node, task: matchWorker}
+                return node
+            })
+            setExtendNodes(update)
+        } 
+        updateNodes()
+    }, [nodes, tasks])
+    
+    useEffect(()=>{
+        if (taskMetadata === null) {
+            setTaskMetadata(tasks[tasks.length - 1])
+        }
+    }, [setTaskMetadata, taskMetadata, tasks])
+
+    console.log("extended nodes: ", extendNodes)
     return (
         <div className='flex flex-col w-full text-white text-opacity-70 '>
             <span className='flex w-5/6 py-2 px-5'>
@@ -71,7 +89,7 @@ function NodeList({nodes, tasks}) {
                 </ul>
             </span>
                 <div className='bg-white bg-opacity-10 m-4 rounded-lg'>
-                    {nodes.length > 0 && nodes.map((item, key) => (
+                    {extendNodes && extendNodes.length > 0 && extendNodes.map((item, key) => (
                         <div key={key}>
                             <span className='flex justify-between w-full items-center py-4 px-5'>
                                 <ul className='grid grid-cols-4 w-full items-center'>
@@ -93,8 +111,8 @@ function NodeList({nodes, tasks}) {
                             </span>
                             <div className='p-1 flex w-full'>
                                 <GetLogs link={`65.108.229.2:3001`} 
-                                    taskId={taskMetadata && item.address === taskMetadata.workerAddress? taskMetadata.taskId : ''} 
-                                    loading={taskMetadata && item.address === taskMetadata.workerAddress? false : true} 
+                                    taskId={item.task? item.task.taskId: ''} 
+                                    loading={item.task? false: true} 
                                 />
                             </div>
                         </div>

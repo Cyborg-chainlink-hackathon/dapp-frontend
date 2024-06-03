@@ -140,13 +140,13 @@ export default function ComputeProviderStatus() {
   const { metadata } = useCyborgState().dashboard
   const { taskMetadata } = useCyborgState()
   const [taskId, setTaskId] = useState(taskMetadata.taskId? taskMetadata.taskId : null);
-  const [link, setLink] = useState(`${metadata.ip.ipv4.join('.')}:${metadata.port.replace(",", "")}`);
+  const [link, setLink] = useState(`65.108.229.2:3001`);
   // let taskId = taskMetadata? taskMetadata.taskId : null;
   useEffect(()=>{
-    const route = `${metadata.ip.ipv4.join('.')}:${metadata.port.replace(",", "")}`
+    // const route = ``
     if (taskMetadata) {
       setTaskId(taskMetadata.taskId)
-      setLink(route)
+      // setLink(route)
     }
   },[taskMetadata])
   console.log("metadata: ", metadata)
