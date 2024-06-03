@@ -35,7 +35,8 @@ const initialState = {
       metadata: null
     },
     workerList: null,
-    taskMetadata: null
+    taskMetadata: null,
+    taskList: null
 }
 
 ///
@@ -48,6 +49,7 @@ const ACTIONS = {
     SELECT_SERVICE: 'SELECT_SERVICE',
     DEPLOY_SERVICE: 'DEPLOY_SERVICE',
     LIST_WORKERS: 'LIST_WORKERS',
+    LIST_TASKS: 'LIST_TASKS',
     TOGGLE_DASHBOARD: 'TOGGLE_DASHBOARD',
     SET_TASK_METADATA: 'SET_TASK_METADATA'
 }
@@ -73,6 +75,8 @@ const reducer = (state, action) => {
       return { ...state, serviceStatus: action.payload }
     case ACTIONS.LIST_WORKERS:
       return { ...state, workerList: action.payload }
+    case ACTIONS.LIST_TASKS:
+      return { ...state, taskList: action.payload }
     case ACTIONS.TOGGLE_DASHBOARD:
       return { ...state, dashboard: action.payload }
     case ACTIONS.SET_TASK_METADATA:
@@ -87,7 +91,7 @@ const CyborgContext = React.createContext()
 
 const CyborgContextProvider = ({children}) => {
   const [state, dispatch] = useReducer(reducer, initialState)
-  const { provider, workerTxContract } = useContext(WalletContext)
+  const { provider, workerTxContract, taskTxContract } = useContext(WalletContext)
   const [event, setEvents] = useState()
 
     const { devMode } = state
@@ -145,6 +149,32 @@ const CyborgContextProvider = ({children}) => {
       if (workerTxContract) getRegisteredWorkers()
     }, [workerTxContract])
 
+    useEffect(()=>{
+      async function getScheduledTasks() {
+        console.log("getting tasks")
+        let tasks = [];
+        try {
+          const count = await taskTxContract.taskCounter()
+          for (let i = 0; i < count.toNumber(); i++) {
+            const details = await taskTxContract.tasks(i)
+            const task = {
+              taskId: i,
+              workerAddress:details[0],
+              creator:details[1],
+              status:details[2],
+              dockerImage:details[3],
+            }
+            console.log("task: ", task)
+            tasks.push(task) 
+          }
+          listTasks(tasks)
+        } catch (e) {
+          console.error("failed getting task info: ", e)
+        }
+      }
+      if (taskTxContract) getScheduledTasks()
+    }, [taskTxContract])
+
     const toggleDevMode = () => {
         dispatch({ type: ACTIONS.TOGGLE_DEV_MODE, payload: !devMode })
     }
@@ -172,12 +202,13 @@ const CyborgContextProvider = ({children}) => {
     const setTaskMetadata = (taskEvent) => {
       console.log("set task metadata: ", taskEvent)
       const taskMetadata = {
-        taskExecutor: taskEvent[0],
-        taskOwner: taskEvent[1],
-        taskId: taskEvent[2],
-        taskInstruction: taskEvent[3],
-        executorIp: taskEvent[4]
+        dockerImage: taskEvent.dockerImage,
+        status: taskEvent.status,
+        taskId: taskEvent.taskId,
+        workerAddress: taskEvent.workerAddress,
+        executorIp: 'hidden'
       }
+
       console.log("task metadata: ", taskMetadata)
       dispatch({ type: ACTIONS.SET_TASK_METADATA, payload: taskMetadata })
     }
@@ -188,6 +219,10 @@ const CyborgContextProvider = ({children}) => {
 
     const listWorkers = (list) => {
       dispatch({ type: ACTIONS.LIST_WORKERS, payload: list})
+    }
+
+    const listTasks = (list) => {
+      dispatch({ type: ACTIONS.LIST_TASKS, payload: list})
     }
 
     const toggleDashboard = ({section = null, metadata = null}) => {

@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 
 function UploadDockerImgURL({setService}) {
   const { taskTxContract } = useContext(WalletContext)
-  const { selectService, setTaskStatus } = useCyborg()
+  const { selectService, setTaskStatus, setTaskMetadata } = useCyborg()
   const [url,setUrl] = useState('')
 
   const handleUrlChange = (e) => {
@@ -23,6 +23,31 @@ function UploadDockerImgURL({setService}) {
       toast.success('Transaction sent:', tx);
       const receipt = await tx.wait();
       console.log('Transaction mined:', receipt);
+
+        // Access the logs from the receipt
+      const logs = receipt.logs;
+      console.log('Logs:', logs);
+
+      // Parse the logs to get event data
+      const eventName = 'TaskScheduled';  // Replace with your actual event name
+      const parsedEvents = logs.map(log => {
+        try {
+          return taskTxContract.interface.parseLog(log);
+        } catch (error) {
+          console.error('Error parsing log:', error);
+          return null;
+        }
+      }).filter(event => event && event.name === eventName);
+
+      console.log('Parsed events:', parsedEvents);
+
+      // You can now use the parsed events as needed
+      parsedEvents.forEach(event => {
+        console.log(`Event ${event.name} with args:`, event.args);
+        setTaskMetadata(event.args)
+      });
+
+      setTaskStatus(DEPLOY_STATUS.READY)
     } catch (error) {
       console.error('Error writing contract data:', error);
       toast.error('Error writing contract data:', error);

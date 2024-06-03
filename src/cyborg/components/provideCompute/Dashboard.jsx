@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import nondeployed from '../../../../public/assets/icons/nondeployed.png' 
 import deploymentsTab from '../../../../public/assets/icons/deployment-logo.png' 
 import cyberdock from '../../../../public/assets/icons/cyberdockDash.png' 
@@ -6,6 +6,7 @@ import { FiPlusCircle } from "react-icons/fi";
 import { DASH_STATE, useCyborg, useCyborgState } from '../../../dapp-context/CyborgContext';
 import { Button } from 'semantic-ui-react';
 import { TbRefresh } from "react-icons/tb";
+import { GetLogs } from './ComputeProviderStatus';
 
 function AddNodeButton({addNode}) {
     return (
@@ -28,8 +29,12 @@ function NoNodes({addNode}) {
     )
 }
 
-function NodeList({nodes}) {
-    const { toggleDashboard } = useCyborg()
+function NodeList({nodes, tasks}) {
+    // const 
+    // useEffect(()=>{
+    //     const
+    // }, [nodes, tasks])
+    const { toggleDashboard, taskMetadata } = useCyborg()
     return (
         <div className='flex flex-col w-full text-white text-opacity-70 '>
             <span className='flex w-5/6 py-2 px-5'>
@@ -87,7 +92,10 @@ function NodeList({nodes}) {
                                 </ul>
                             </span>
                             <div className='p-1 flex w-full'>
-                                {/* <GetLogs link={`${item.ip.ipv4.join('.')}:${item.port.replace(",", "")}`} loading/> */}
+                                <GetLogs link={`65.108.229.2:3001`} 
+                                    taskId={taskMetadata && item.address === taskMetadata.workerAddress? taskMetadata.taskId : ''} 
+                                    loading={taskMetadata && item.address === taskMetadata.workerAddress? false : true} 
+                                />
                             </div>
                         </div>
                     ))}
@@ -100,7 +108,7 @@ function Dashboard() {
     const [node, addNode]=useState(false)
     const [refresh, setRefresh] = useState(false)
 
-    const { workerList } = useCyborgState()
+    const { workerList, taskList } = useCyborgState()
     console.log("workerList: ", workerList)
 
   return (
@@ -119,7 +127,7 @@ function Dashboard() {
             </div>
         </div>
         {   node || (workerList && workerList.length > 0)?
-            <NodeList nodes={workerList} /> :
+            <NodeList nodes={workerList} tasks={taskList}/> :
             <NoNodes addNode={addNode} />
         }
     </div>
