@@ -5,6 +5,15 @@ import { taskContractABI, taskContractAddressSepolia, workerContractABI, workerC
 // Create the context
 const WalletContext = createContext();
 
+const EVENTS = {
+  TASK: {
+    TaskScheduled: 'TaskScheduled',
+    TaskStatusUpdated: 'TaskStatusUpdated',
+  },
+  WORKER: {
+    WorkerRegistered: 'WorkerRegistered'
+  }
+}
 // Create a provider component
 // eslint-disable-next-line react/prop-types
 const WalletProvider = ({ children }) => {
@@ -45,6 +54,7 @@ const WalletProvider = ({ children }) => {
     } else {
       console.log("no ethereum found!")
     }
+
     if (signer && taskTxContract == null) {
       const transactionContract = new ethers.Contract(taskContractAddressSepolia, taskContractABI, signer)
       setTaskTxContract(transactionContract)
@@ -56,15 +66,14 @@ const WalletProvider = ({ children }) => {
       setWorkerTxContract(transactionContract)
       console.log("transactionContract Worker: ", transactionContract)
     }
-
   }, [provider, signer, taskTxContract, workerTxContract]);
 
   return (
-    <WalletContext.Provider value={{ provider, signer, account, connectWallet, taskTxContract }}>
+    <WalletContext.Provider value={{ provider, signer, account, connectWallet, taskTxContract, workerTxContract }}>
       {children}
     </WalletContext.Provider>
   );
 };
 
 // Export the context and provider
-export { WalletContext, WalletProvider };
+export { WalletContext, WalletProvider, EVENTS };

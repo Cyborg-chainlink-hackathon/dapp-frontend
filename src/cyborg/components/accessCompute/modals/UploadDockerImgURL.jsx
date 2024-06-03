@@ -1,8 +1,11 @@
-import {useState} from 'react'
+import {useContext, useState} from 'react'
 import { Dimmer } from 'semantic-ui-react'
 import { SERVICES, DEPLOY_STATUS, useCyborg } from '../../../../dapp-context/CyborgContext'
+import { WalletContext } from '../../../../dapp-context/Web3Connect'
+import toast from 'react-hot-toast';
 
 function UploadDockerImgURL({setService}) {
+  const { taskTxContract } = useContext(WalletContext)
   const { selectService, setTaskStatus } = useCyborg()
   const [url,setUrl] = useState('')
 
@@ -14,6 +17,17 @@ function UploadDockerImgURL({setService}) {
     selectService(SERVICES.CYBER_DOCK)
     setTaskStatus(DEPLOY_STATUS.PENDING)
     console.log("url: ", url)
+    try {
+      const tx = await taskTxContract.scheduleTask(url); 
+      console.log('Transaction sent:', tx);
+      toast.success('Transaction sent:', tx);
+      const receipt = await tx.wait();
+      console.log('Transaction mined:', receipt);
+    } catch (error) {
+      console.error('Error writing contract data:', error);
+      toast.error('Error writing contract data:', error);
+      setTaskStatus(DEPLOY_STATUS.FAILED)
+    }
   }
   
   return (

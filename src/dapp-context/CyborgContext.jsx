@@ -1,5 +1,5 @@
-import React, { useReducer, useContext, useEffect } from 'react'
-// import { WalletProvider } from './Web3Connect'
+import React, { useReducer, useContext, useEffect, useState } from 'react'
+import { WalletContext, EVENTS } from './Web3Connect'
 
 export const SERVICES = {
   CYBER_DOCK: 'CYBER_DOCK'
@@ -87,22 +87,63 @@ const CyborgContext = React.createContext()
 
 const CyborgContextProvider = ({children}) => {
   const [state, dispatch] = useReducer(reducer, initialState)
-  // const { provider } = WalletProvider()
+  const { provider, workerTxContract } = useContext(WalletContext)
+  const [event, setEvents] = useState()
 
     const { devMode } = state
 
-    useEffect(() => {
-      const getRegisteredWorkers = async () => {
-          let workers = []
-          // const count = await api.query.workerRegistration.nextClusterId()
-          // for (let i = 0; i < count.toNumber(); i++) {
-          //     const worker = await api.query.workerRegistration.workerClusters(i)
-          //     workers.push(worker.toHuman()) 
-          // }
-          listWorkers(workers)
+    useEffect(() => {  
+      const getEvents = async (txContract, eventName) => {
+        try {
+          const eventTopic = txContract.interface.getEventTopic(eventName);
+          const filter = {
+            address: txContract.address,
+            topics: [eventTopic],
+          };
+          try {
+            const logs = await provider.getLogs(filter);
+            console.log("logs: ", logs)
+            const events = logs.map(log => txContract.interface.parseLog(log));
+            console.log('Past events:', events);
+            setEvents(events);
+          } catch (error) {
+            console.error('Error fetching past events:', error);
+          }
+        } catch (e) {
+          console.error("getEvents error: ", e)
+        }
       }
-      getRegisteredWorkers()
-    },[])
+      if (workerTxContract && !event) {
+        getEvents(workerTxContract, EVENTS.WORKER.WorkerRegistered)
+      }
+    }, [provider, workerTxContract, event]);
+  
+
+    useEffect(()=>{
+      async function getRegisteredWorkers() {
+        console.log("getting workers")
+        let workers = [];
+        try {
+          const count = await workerTxContract.getWorkerCount()
+          for (let i = 0; i < count.toNumber(); i++) {
+            const details = await workerTxContract.getWorkerDetails(i)
+            const worker = {
+              address:details[0],
+              memoryInfo:details[1],
+              cpuCores:details[2],
+              storageInfo:details[3],
+              isActive:details[4]
+            }
+            console.log("worker: ", worker)
+            workers.push(worker) 
+          }
+          listWorkers(workers)
+        } catch (e) {
+          console.error("failed getting worker info: ", e)
+        }
+      }
+      if (workerTxContract) getRegisteredWorkers()
+    }, [workerTxContract])
 
     const toggleDevMode = () => {
         dispatch({ type: ACTIONS.TOGGLE_DEV_MODE, payload: !devMode })

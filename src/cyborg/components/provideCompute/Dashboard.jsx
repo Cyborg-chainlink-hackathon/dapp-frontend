@@ -66,9 +66,9 @@ function NodeList({nodes}) {
                 </ul>
             </span>
                 <div className='bg-white bg-opacity-10 m-4 rounded-lg'>
-                    {/* {nodes.length > 0 && nodes.map((item, key) => (
-                        <div>
-                            <span key={key} className='flex justify-between w-full items-center py-4 px-5'>
+                    {nodes.length > 0 && nodes.map((item, key) => (
+                        <div key={key}>
+                            <span className='flex justify-between w-full items-center py-4 px-5'>
                                 <ul className='grid grid-cols-4 w-full items-center'>
                                     <li className='flex items-center gap-3]'>
                                         <a>
@@ -76,20 +76,21 @@ function NodeList({nodes}) {
                                         </a>
                                         <button className='pl-3 flex flex-col items-start hover:text-cb-green'
                                             onClick={()=>toggleDashboard({ section: DASH_STATE.SERVER, metadata: item })}>
-                                            <h3 className='mb-0'>{item.name}</h3>
-                                            <p className='mt-0 text-sm'>{item.account.slice(0,16)}</p>
+                                            <h3 className='mb-0'>Worker {key}</h3>
+                                            <p className='mt-0 text-sm'>{item.address.slice(0,10)}</p>
                                         </button>
                                     </li>
                                     <li>Providers</li>
-                                    <li>{`${item.ip.ipv4.join('.')}:${item.port.replace(",", "")}`}</li>
-                                    <li className={`${item.status ?'text-cb-green': 'text-red-600'}`}>{item.status?'verified': 'unverified'}</li>
+                                    {/* <li>{`${item.ip.ipv4.join('.')}:${item.port.replace(",", "")}`}</li> */}
+                                    <li>Hidden</li>
+                                    <li className={`${item.isActive ?'text-cb-green': 'text-red-600'}`}>{item.isActive?'active': 'inactive'}</li>
                                 </ul>
                             </span>
                             <div className='p-1 flex w-full'>
-                                <GetLogs link={`${item.ip.ipv4.join('.')}:${item.port.replace(",", "")}`} loading/>
+                                {/* <GetLogs link={`${item.ip.ipv4.join('.')}:${item.port.replace(",", "")}`} loading/> */}
                             </div>
                         </div>
-                    ))} */}
+                    ))}
                 </div>
         </div>
     )
